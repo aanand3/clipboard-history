@@ -1,12 +1,13 @@
 import { ActionIcon, Box, Checkbox, Divider, Group, Stack, Text } from "@mantine/core";
 import { useSet } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
-import { IconFold, IconStar, IconTrash } from "@tabler/icons-react";
+import { IconFold, IconKeyboard, IconStar, IconTrash } from "@tabler/icons-react";
 import { useAtomValue } from "jotai";
 import { useEffect, useMemo, type CSSProperties, type ReactNode } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList } from "react-window";
 
+import { ShortcutsModalContent } from "~popup/components/modals/ShortcutsModalContent";
 import { favoriteEntryIdsSetAtom } from "~popup/states/atoms";
 import { addFavoriteEntryIds, deleteFavoriteEntryIds } from "~storage/favoriteEntryIds";
 import type { Entry } from "~types/entry";
@@ -51,6 +52,10 @@ export const EntryList = ({ entries, noEntriesOverlay }: Props) => {
   useEffect(() => {
     selectedEntryIds.clear();
   }, [entryIdsStringified]);
+
+  function getSelectedEntries() {
+    return entries.filter((entry) => selectedEntryIds.has(entry.id));
+  }
 
   return (
     <Stack
@@ -125,9 +130,7 @@ export const EntryList = ({ entries, noEntriesOverlay }: Props) => {
                           withCloseButton: false,
                           children: (
                             <MergeModalContent
-                              initialEntries={entries.filter((entry) =>
-                                selectedEntryIds.has(entry.id),
-                              )}
+                              initialEntries={getSelectedEntries()}
                             />
                           ),
                         })
@@ -136,6 +139,22 @@ export const EntryList = ({ entries, noEntriesOverlay }: Props) => {
                 <IconFold size="1rem" />
               </ActionIcon>
             )}
+            <ActionIcon
+              sx={(theme) => commonActionIconSx({ theme, disabled: selectedEntryIds.size !== 1 })}
+              onClick={
+                selectedEntryIds.size !== 1
+                  ? undefined
+                  : () =>
+                      modals.open({
+                        title: "Assign Shortcut",
+                        children: (
+                          <ShortcutsModalContent selectedEntryId={getSelectedEntries()} />
+                        ),
+                      })
+              }
+            >
+              <IconKeyboard size="1rem" />
+            </ActionIcon>
           </Group>
           <Text fz="xs">
             {selectedEntryIds.size} of {entries.length} selected
